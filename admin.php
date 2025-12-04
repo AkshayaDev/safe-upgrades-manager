@@ -8,6 +8,7 @@ final class SAFEUPMA_Admin {
     public static function init() {
         add_action('load-update.php', array(__CLASS__, 'safeupma_set_hooks'));
         add_action('admin_menu', array(__CLASS__, 'safeupma_add_backup_menu'));
+        add_action('admin_enqueue_scripts', array(__CLASS__, 'safeupma_enqueue_admin_assets'));
         add_action('wp_ajax_safeupma_restore_backup', array(__CLASS__, 'safeupma_restore_backup'));
         add_action('wp_ajax_safeupma_delete_backup', array(__CLASS__, 'safeupma_delete_backup'));
         
@@ -150,16 +151,15 @@ final class SAFEUPMA_Admin {
         
         self::cleanup_old_backups();
         echo '</div>';
-        self::admin_scripts();
     }
     
     private static function display_tabs($current_tab, $plugin_count, $theme_count) {
         $base_url = admin_url('tools.php?page=safeupma-backups');
         
-        echo '<nav class="nav-tab-wrapper">';
+        echo '<nav class="safeupma-nav-tab-wrapper nav-tab-wrapper">';
         
-        $plugin_class = ($current_tab === 'plugins') ? 'nav-tab nav-tab-active' : 'nav-tab';
-        $theme_class = ($current_tab === 'themes') ? 'nav-tab nav-tab-active' : 'nav-tab';
+        $plugin_class = ($current_tab === 'plugins') ? 'safeupma-nav-tab safeupma-nav-tab-active nav-tab nav-tab-active' : 'safeupma-nav-tab nav-tab';
+        $theme_class = ($current_tab === 'themes') ? 'safeupma-nav-tab safeupma-nav-tab-active nav-tab nav-tab-active' : 'safeupma-nav-tab nav-tab';
         
         echo '<a href="' . esc_url($base_url . '&tab=plugins') . '" class="' . esc_attr($plugin_class) . '">';
         echo esc_html__('Plugin Backups', 'safe-upgrades-manager') . ' <span class="count">(' . esc_html($plugin_count) . ')</span>';
@@ -199,7 +199,7 @@ final class SAFEUPMA_Admin {
     private static function display_pagination($current_page, $total_pages, $type, $total_items) {
         $base_url = admin_url('tools.php?page=safeupma-backups&tab=' . $type . 's');
         
-        echo '<div class="tablenav bottom">';
+        echo '<div class="safeupma-tablenav-bottom tablenav bottom">';
         echo '<div class="alignleft actions bulkactions"></div>';
         echo '<div class="tablenav-pages">';
         
@@ -257,13 +257,13 @@ final class SAFEUPMA_Admin {
     }
     
     private static function display_backup_table($backups, $type) {
-        echo '<table class="wp-list-table widefat fixed striped">';
+        echo '<table class="safeupma-backup-table wp-list-table widefat fixed striped">';
         echo '<thead>';
         echo '<tr>';
         echo '<th>' . esc_html__('Name', 'safe-upgrades-manager') . '</th>';
         echo '<th>' . esc_html__('Version', 'safe-upgrades-manager') . '</th>';
-        echo '<th>' . esc_html__('Backup Date', 'safe-upgrades-manager') . '</th>';
-        echo '<th>' . esc_html__('Size', 'safe-upgrades-manager') . '</th>';
+        echo '<th class="safeupma-backup-date">' . esc_html__('Backup Date', 'safe-upgrades-manager') . '</th>';
+        echo '<th class="safeupma-backup-size">' . esc_html__('Size', 'safe-upgrades-manager') . '</th>';
         echo '<th>' . esc_html__('Actions', 'safe-upgrades-manager') . '</th>';
         echo '</tr>';
         echo '</thead>';
@@ -276,13 +276,13 @@ final class SAFEUPMA_Admin {
             echo '<tr>';
             echo '<td>' . esc_html($backup['name']) . '</td>';
             echo '<td>' . esc_html($backup['version']) . '</td>';
-            echo '<td>' . esc_html($backup['date']) . '</td>';
-            echo '<td>' . esc_html($size) . '</td>';
-            echo '<td>';
+            echo '<td class="safeupma-backup-date">' . esc_html($backup['date']) . '</td>';
+            echo '<td class="safeupma-backup-size">' . esc_html($size) . '</td>';
+            echo '<td class="safeupma-backup-actions">';
             if (file_exists($backup_path)) {
-                echo '<button class="button restore-backup" data-index="' . esc_attr($backup['index']) . '">' . esc_html__('Restore', 'safe-upgrades-manager') . '</button> ';
+                echo '<button class="button safeupma-restore-backup" data-index="' . esc_attr($backup['index']) . '">' . esc_html__('Restore', 'safe-upgrades-manager') . '</button> ';
             }
-            echo '<button class="button delete-backup" data-index="' . esc_attr($backup['index']) . '">' . esc_html__('Delete', 'safe-upgrades-manager') . '</button>';
+            echo '<button class="button safeupma-delete-backup" data-index="' . esc_attr($backup['index']) . '">' . esc_html__('Delete', 'safe-upgrades-manager') . '</button>';
             echo '</td>';
             echo '</tr>';
         }
@@ -308,82 +308,44 @@ final class SAFEUPMA_Admin {
         return 0;
     }
     
-    private static function admin_scripts() {
-        // Enqueue admin styles
-        wp_add_inline_style('wp-admin', '
-            .nav-tab-wrapper {
-                margin-bottom: 20px;
-            }
-            .nav-tab .count {
-                color: #72777c;
-                font-weight: normal;
-            }
-            .nav-tab-active .count {
-                color: #0073aa;
-            }
-            .wp-list-table {
-                margin-top: 0;
-            }
-            .tablenav.bottom {
-                margin-top: 20px;
-                padding-top: 10px;
-                border-top: 1px solid #ddd;
-            }
-        ');
+    public static function safeupma_enqueue_admin_assets($hook) {
+        // Only load on our specific admin page
+        if ('tools_page_safeupma-backups' !== $hook) {
+            return;
+        }
         
-        // Enqueue jQuery if not already loaded
-        wp_enqueue_script('jquery');
+        // Enqueue CSS
+        wp_enqueue_style(
+            'safeupma-admin-css',
+            SAFEUPMA_PLUGIN_URL . 'assets/admin.css',
+            array(),
+            '1.0.0'
+        );
         
-        // Add inline script for backup functionality
-        $script = "
-        jQuery(document).ready(function($) {
-            $('.restore-backup').click(function() {
-                if (confirm('" . esc_js(__('Are you sure you want to restore this backup? This will overwrite the current version.', 'safe-upgrades-manager')) . "')) {
-                    var index = $(this).data('index');
-                    var button = $(this);
-                    button.prop('disabled', true).text('" . esc_js(__('Restoring...', 'safe-upgrades-manager')) . "');
-                    
-                    $.post(ajaxurl, {
-                        action: 'safeupma_restore_backup',
-                        index: index,
-                        nonce: '" . wp_create_nonce('safeupma_nonce') . "'
-                    }, function(response) {
-                        if (response.success) {
-                            alert('" . esc_js(__('Backup restored successfully!', 'safe-upgrades-manager')) . "');
-                            location.reload();
-                        } else {
-                            alert('" . esc_js(__('Error restoring backup: ', 'safe-upgrades-manager')) . "' + (response.data || '" . esc_js(__('Unknown error', 'safe-upgrades-manager')) . "'));
-                            button.prop('disabled', false).text('" . esc_js(__('Restore', 'safe-upgrades-manager')) . "');
-                        }
-                    });
-                }
-            });
-            
-            $('.delete-backup').click(function() {
-                if (confirm('" . esc_js(__('Are you sure you want to delete this backup?', 'safe-upgrades-manager')) . "')) {
-                    var index = $(this).data('index');
-                    var button = $(this);
-                    button.prop('disabled', true).text('" . esc_js(__('Deleting...', 'safe-upgrades-manager')) . "');
-                    
-                    $.post(ajaxurl, {
-                        action: 'safeupma_delete_backup',
-                        index: index,
-                        nonce: '" . wp_create_nonce('safeupma_nonce') . "'
-                    }, function(response) {
-                        if (response.success) {
-                            alert('" . esc_js(__('Backup deleted successfully!', 'safe-upgrades-manager')) . "');
-                            location.reload();
-                        } else {
-                            alert('" . esc_js(__('Error deleting backup: ', 'safe-upgrades-manager')) . "' + (response.data || '" . esc_js(__('Unknown error', 'safe-upgrades-manager')) . "'));
-                            button.prop('disabled', false).text('" . esc_js(__('Delete', 'safe-upgrades-manager')) . "');
-                        }
-                    });
-                }
-            });
-        });
-        ";
+        // Enqueue JavaScript
+        wp_enqueue_script(
+            'safeupma-admin-js',
+            SAFEUPMA_PLUGIN_URL . 'assets/admin.js',
+            array('jquery'),
+            '1.0.0',
+            true
+        );
         
-        wp_add_inline_script('jquery', $script);
+        // Localize script with translations and settings
+        wp_localize_script('safeupma-admin-js', 'safeupma_admin', array(
+            'nonce' => wp_create_nonce('safeupma_nonce'),
+            'restore_confirm' => __('Are you sure you want to restore this backup? This will overwrite the current version.', 'safe-upgrades-manager'),
+            'delete_confirm' => __('Are you sure you want to delete this backup?', 'safe-upgrades-manager'),
+            'restoring_text' => __('Restoring...', 'safe-upgrades-manager'),
+            'deleting_text' => __('Deleting...', 'safe-upgrades-manager'),
+            'restore_text' => __('Restore', 'safe-upgrades-manager'),
+            'delete_text' => __('Delete', 'safe-upgrades-manager'),
+            'restore_success' => __('Backup restored successfully!', 'safe-upgrades-manager'),
+            'delete_success' => __('Backup deleted successfully!', 'safe-upgrades-manager'),
+            'restore_error' => __('Error restoring backup:', 'safe-upgrades-manager'),
+            'delete_error' => __('Error deleting backup:', 'safe-upgrades-manager'),
+            'unknown_error' => __('Unknown error', 'safe-upgrades-manager')
+        ));
     }
     
     private static function cleanup_old_backups() {

@@ -101,7 +101,7 @@ SUGGESTED_FIXES.md
 local-config.php
 dev-config.php
 
-# Ignore any generated assets
+# Ignore any generated/built assets (but keep source assets)
 assets/dist/
 assets/build/
 

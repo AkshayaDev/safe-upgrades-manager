@@ -1,0 +1,50 @@
+/**
+ * Safe Upgrades Manager - Admin Styles
+ * @package SafeUpgradesManager
+ */
+
+.safeupma-nav-tab-wrapper {
+    margin-bottom: 20px;
+}
+
+.safeupma-nav-tab .count {
+    color: #72777c;
+    font-weight: normal;
+}
+
+.safeupma-nav-tab-active .count {
+    color: #0073aa;
+}
+
+.safeupma-backup-table {
+    margin-top: 0;
+}
+
+.safeupma-tablenav-bottom {
+    margin-top: 20px;
+    padding-top: 10px;
+    border-top: 1px solid #ddd;
+}
+
+.safeupma-restore-backup,
+.safeupma-delete-backup {
+    margin-right: 5px;
+}
+
+.safeupma-restore-backup:disabled,
+.safeupma-delete-backup:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.safeupma-backup-actions {
+    white-space: nowrap;
+}
+
+.safeupma-backup-size {
+    text-align: right;
+}
+
+.safeupma-backup-date {
+    white-space: nowrap;
+}
