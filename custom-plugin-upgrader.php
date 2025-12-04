@@ -1,6 +1,10 @@
 <?php
 
-class SUGM_Plugin_Upgrader extends Plugin_Upgrader {
+if (!defined('ABSPATH')) {
+    exit; // Exit if accessed directly
+}
+
+class SAFEUPMA_Plugin_Upgrader extends Plugin_Upgrader {
     public function install_package($args = array()) {
         global $wp_filesystem;
 
@@ -37,7 +41,7 @@ class SUGM_Plugin_Upgrader extends Plugin_Upgrader {
         return parent::install_package($args);
     }
 
-    private function sugm_get_plugin_data($directory) {
+    private function safeupma_get_plugin_data($directory) {
         $files = glob($directory . '*.php');
 
         if ($files) {
@@ -66,14 +70,14 @@ class SUGM_Plugin_Upgrader extends Plugin_Upgrader {
             return parent::clear_destination($destination);
         }
 
-        $data = $this->sugm_get_plugin_data($destination);
+        $data = $this->safeupma_get_plugin_data($destination);
 
         if (false === $data) {
             // The existing directory is not a valid plugin, skip backup.
             return parent::clear_destination($destination);
         }
 
-        $backup_url = $this->sugm_create_backup($destination);
+        $backup_url = $this->safeupma_create_backup($destination);
 
         if (!is_wp_error($backup_url)) {
             /* translators: 1: plugin zip URL */
@@ -122,31 +126,31 @@ class SUGM_Plugin_Upgrader extends Plugin_Upgrader {
         return parent::clear_destination($destination);
     }
 
-    private function sugm_create_backup($directory) {
-        $backup_dir = SUGM_BACKUP_DIR . 'plugins/';
+    private function safeupma_create_backup($directory) {
+        $backup_dir = SAFEUPMA_BACKUP_DIR . 'plugins/';
 
         if (!is_dir($backup_dir)) {
             wp_mkdir_p($backup_dir);
         }
 
-        $data = $this->sugm_get_plugin_data($directory);
+        $data = $this->safeupma_get_plugin_data($directory);
         
         if (!$data) {
-            return new WP_Error('sugm-cannot-backup-no-plugin-data', __('Could not read plugin information.', 'safe-upgrades-manager'));
+            return new WP_Error('safeupma-cannot-backup-no-plugin-data', __('Could not read plugin information.', 'safe-upgrades-manager'));
         }
 
         $backup_name = basename($directory) . '_' . gmdate('Y-m-d_H-i-s') . '_backup.zip';
         $backup_path = $backup_dir . $backup_name;
 
         // Create ZIP archive
-        if (!$this->sugm_create_zip_backup($directory, $backup_path)) {
-            return new WP_Error('sugm-cannot-backup-zip-failed', __('Failed to create plugin ZIP backup.', 'safe-upgrades-manager'));
+        if (!$this->safeupma_create_zip_backup($directory, $backup_path)) {
+            return new WP_Error('safeupma-cannot-backup-zip-failed', __('Failed to create plugin ZIP backup.', 'safe-upgrades-manager'));
         }
         
         // Save backup info to database
-        $this->sugm_save_backup_info('plugin', basename($directory), $backup_name, basename($directory), $data['version']);
+        $this->safeupma_save_backup_info('plugin', basename($directory), $backup_name, basename($directory), $data['version']);
 
-        return admin_url('tools.php?page=sugm-backups');
+        return admin_url('tools.php?page=safeupma-backups');
     }
 
     private function get_random_characters($min_length, $max_length) {
@@ -195,7 +199,7 @@ class SUGM_Plugin_Upgrader extends Plugin_Upgrader {
         }
     }
     
-    private function sugm_create_zip_backup($source_dir, $zip_path) {
+    private function safeupma_create_zip_backup($source_dir, $zip_path) {
         // Reduce the chance that a timeout will occur while creating the zip file.
         if (function_exists('set_time_limit')) {
             @set_time_limit(600);
@@ -218,8 +222,8 @@ class SUGM_Plugin_Upgrader extends Plugin_Upgrader {
         return true;
     }
     
-    private function sugm_save_backup_info($type, $name, $backup_name, $original_file, $version) {
-        $backups = get_option('sugm_backups', array());
+    private function safeupma_save_backup_info($type, $name, $backup_name, $original_file, $version) {
+        $backups = get_option('safeupma_backups', array());
         
         $backups[] = array(
             'type' => $type,
@@ -231,6 +235,6 @@ class SUGM_Plugin_Upgrader extends Plugin_Upgrader {
             'timestamp' => time()
         );
         
-        update_option('sugm_backups', $backups);
+        update_option('safeupma_backups', $backups);
     }
 }

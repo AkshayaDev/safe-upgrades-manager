@@ -1,23 +1,27 @@
 <?php
 
-final class SUGM_Admin {
+if (!defined('ABSPATH')) {
+    exit; // Exit if accessed directly
+}
+
+final class SAFEUPMA_Admin {
     public static function init() {
-        add_action('load-update.php', array(__CLASS__, 'set_hooks'));
-        add_action('admin_menu', array(__CLASS__, 'add_backup_menu'));
-        add_action('wp_ajax_restore_backup', array(__CLASS__, 'restore_backup'));
-        add_action('wp_ajax_delete_backup', array(__CLASS__, 'delete_backup'));
+        add_action('load-update.php', array(__CLASS__, 'safeupma_set_hooks'));
+        add_action('admin_menu', array(__CLASS__, 'safeupma_add_backup_menu'));
+        add_action('wp_ajax_safeupma_restore_backup', array(__CLASS__, 'safeupma_restore_backup'));
+        add_action('wp_ajax_safeupma_delete_backup', array(__CLASS__, 'safeupma_delete_backup'));
         
         self::ensure_backup_directory();
     }
     
     public static function ensure_backup_directory() {
-        if (!file_exists(SUGM_BACKUP_DIR)) {
-            wp_mkdir_p(SUGM_BACKUP_DIR);
-            file_put_contents(SUGM_BACKUP_DIR . '.htaccess', 'deny from all');
+        if (!file_exists(SAFEUPMA_BACKUP_DIR)) {
+            wp_mkdir_p(SAFEUPMA_BACKUP_DIR);
+            file_put_contents(SAFEUPMA_BACKUP_DIR . '.htaccess', 'deny from all');
         }
     }
 
-    public static function set_hooks() {
+    public static function safeupma_set_hooks() {
         include_once(ABSPATH . 'wp-admin/includes/class-wp-upgrader.php');
 
         add_action('admin_action_upload-theme', array(__CLASS__, 'update_theme'));
@@ -49,7 +53,7 @@ final class SUGM_Admin {
 
         require_once(dirname(__FILE__) . '/custom-theme-upgrader.php');
 
-        $upgrader = new SUGM_Theme_Upgrader(new Theme_Installer_Skin(compact('type', 'title', 'nonce', 'url')));
+        $upgrader = new SAFEUPMA_Theme_Upgrader(new Theme_Installer_Skin(compact('type', 'title', 'nonce', 'url')));
         $result = $upgrader->install($file_upload->package);
 
         if ($result || is_wp_error($result)) {
@@ -83,7 +87,7 @@ final class SUGM_Admin {
 
         require_once(dirname(__FILE__) . '/custom-plugin-upgrader.php');
 
-        $upgrader = new SUGM_Plugin_Upgrader(new Plugin_Installer_Skin(compact('type', 'title', 'nonce', 'url')));
+        $upgrader = new SAFEUPMA_Plugin_Upgrader(new Plugin_Installer_Skin(compact('type', 'title', 'nonce', 'url')));
         $result = $upgrader->install($file_upload->package);
 
         if ($result || is_wp_error($result)) {
@@ -95,18 +99,18 @@ final class SUGM_Admin {
         exit();
     }
 
-    public static function add_backup_menu() {
+    public static function safeupma_add_backup_menu() {
         add_management_page(
             __('Theme & Plugin Backups', 'safe-upgrades-manager'),
             __('Upgrade Backups', 'safe-upgrades-manager'),
             'manage_options',
-            'sugm-backups',
+            'safeupma-backups',
             array(__CLASS__, 'backup_page')
         );
     }
 
     public static function backup_page() {
-        $backups = get_option('sugm_backups', array());
+        $backups = get_option('safeupma_backups', array());
         $tab = isset($_GET['tab']) ? sanitize_text_field(wp_unslash($_GET['tab'])) : 'plugins';
         $current_tab = in_array($tab, array('plugins', 'themes')) ? $tab : 'plugins';
         $per_page = 10;
@@ -150,7 +154,7 @@ final class SUGM_Admin {
     }
     
     private static function display_tabs($current_tab, $plugin_count, $theme_count) {
-        $base_url = admin_url('tools.php?page=sugm-backups');
+        $base_url = admin_url('tools.php?page=safeupma-backups');
         
         echo '<nav class="nav-tab-wrapper">';
         
@@ -193,7 +197,7 @@ final class SUGM_Admin {
     }
     
     private static function display_pagination($current_page, $total_pages, $type, $total_items) {
-        $base_url = admin_url('tools.php?page=sugm-backups&tab=' . $type . 's');
+        $base_url = admin_url('tools.php?page=safeupma-backups&tab=' . $type . 's');
         
         echo '<div class="tablenav bottom">';
         echo '<div class="alignleft actions bulkactions"></div>';
@@ -266,7 +270,7 @@ final class SUGM_Admin {
         echo '<tbody>';
         
         foreach ($backups as $backup) {
-            $backup_path = SUGM_BACKUP_DIR . $backup['type'] . 's/' . $backup['backup_name'];
+            $backup_path = SAFEUPMA_BACKUP_DIR . $backup['type'] . 's/' . $backup['backup_name'];
             $size = file_exists($backup_path) ? size_format(self::get_folder_size($backup_path)) : __('N/A', 'safe-upgrades-manager');
             
             echo '<tr>';
@@ -305,86 +309,92 @@ final class SUGM_Admin {
     }
     
     private static function admin_scripts() {
-        ?>
-        <style>
-        .nav-tab-wrapper {
-            margin-bottom: 20px;
-        }
-        .nav-tab .count {
-            color: #72777c;
-            font-weight: normal;
-        }
-        .nav-tab-active .count {
-            color: #0073aa;
-        }
-        .wp-list-table {
-            margin-top: 0;
-        }
-        .tablenav.bottom {
-            margin-top: 20px;
-            padding-top: 10px;
-            border-top: 1px solid #ddd;
-        }
-        </style>
-        <script>
+        // Enqueue admin styles
+        wp_add_inline_style('wp-admin', '
+            .nav-tab-wrapper {
+                margin-bottom: 20px;
+            }
+            .nav-tab .count {
+                color: #72777c;
+                font-weight: normal;
+            }
+            .nav-tab-active .count {
+                color: #0073aa;
+            }
+            .wp-list-table {
+                margin-top: 0;
+            }
+            .tablenav.bottom {
+                margin-top: 20px;
+                padding-top: 10px;
+                border-top: 1px solid #ddd;
+            }
+        ');
+        
+        // Enqueue jQuery if not already loaded
+        wp_enqueue_script('jquery');
+        
+        // Add inline script for backup functionality
+        $script = "
         jQuery(document).ready(function($) {
             $('.restore-backup').click(function() {
-                if (confirm('<?php echo esc_js(__('Are you sure you want to restore this backup? This will overwrite the current version.', 'safe-upgrades-manager')); ?>')) {
+                if (confirm('" . esc_js(__('Are you sure you want to restore this backup? This will overwrite the current version.', 'safe-upgrades-manager')) . "')) {
                     var index = $(this).data('index');
                     var button = $(this);
-                    button.prop('disabled', true).text('<?php echo esc_js(__('Restoring...', 'safe-upgrades-manager')); ?>');
+                    button.prop('disabled', true).text('" . esc_js(__('Restoring...', 'safe-upgrades-manager')) . "');
                     
                     $.post(ajaxurl, {
-                        action: 'restore_backup',
+                        action: 'safeupma_restore_backup',
                         index: index,
-                        nonce: '<?php echo esc_js(wp_create_nonce('sugm_nonce')); ?>'
+                        nonce: '" . wp_create_nonce('safeupma_nonce') . "'
                     }, function(response) {
                         if (response.success) {
-                            alert('<?php echo esc_js(__('Backup restored successfully!', 'safe-upgrades-manager')); ?>');
+                            alert('" . esc_js(__('Backup restored successfully!', 'safe-upgrades-manager')) . "');
                             location.reload();
                         } else {
-                            alert('<?php echo esc_js(__('Error restoring backup: ', 'safe-upgrades-manager')); ?>' + (response.data || '<?php echo esc_js(__('Unknown error', 'safe-upgrades-manager')); ?>'));
-                            button.prop('disabled', false).text('<?php echo esc_js(__('Restore', 'safe-upgrades-manager')); ?>');
+                            alert('" . esc_js(__('Error restoring backup: ', 'safe-upgrades-manager')) . "' + (response.data || '" . esc_js(__('Unknown error', 'safe-upgrades-manager')) . "'));
+                            button.prop('disabled', false).text('" . esc_js(__('Restore', 'safe-upgrades-manager')) . "');
                         }
                     });
                 }
             });
             
             $('.delete-backup').click(function() {
-                if (confirm('<?php echo esc_js(__('Are you sure you want to delete this backup?', 'safe-upgrades-manager')); ?>')) {
+                if (confirm('" . esc_js(__('Are you sure you want to delete this backup?', 'safe-upgrades-manager')) . "')) {
                     var index = $(this).data('index');
                     var button = $(this);
-                    button.prop('disabled', true).text('<?php echo esc_js(__('Deleting...', 'safe-upgrades-manager')); ?>');
+                    button.prop('disabled', true).text('" . esc_js(__('Deleting...', 'safe-upgrades-manager')) . "');
                     
                     $.post(ajaxurl, {
-                        action: 'delete_backup',
+                        action: 'safeupma_delete_backup',
                         index: index,
-                        nonce: '<?php echo esc_js(wp_create_nonce('sugm_nonce')); ?>'
+                        nonce: '" . wp_create_nonce('safeupma_nonce') . "'
                     }, function(response) {
                         if (response.success) {
-                            alert('<?php echo esc_js(__('Backup deleted successfully!', 'safe-upgrades-manager')); ?>');
+                            alert('" . esc_js(__('Backup deleted successfully!', 'safe-upgrades-manager')) . "');
                             location.reload();
                         } else {
-                            alert('<?php echo esc_js(__('Error deleting backup: ', 'safe-upgrades-manager')); ?>' + (response.data || '<?php echo esc_js(__('Unknown error', 'safe-upgrades-manager')); ?>'));
-                            button.prop('disabled', false).text('<?php echo esc_js(__('Delete', 'safe-upgrades-manager')); ?>');
+                            alert('" . esc_js(__('Error deleting backup: ', 'safe-upgrades-manager')) . "' + (response.data || '" . esc_js(__('Unknown error', 'safe-upgrades-manager')) . "'));
+                            button.prop('disabled', false).text('" . esc_js(__('Delete', 'safe-upgrades-manager')) . "');
                         }
                     });
                 }
             });
         });
-        </script>
-        <?php
+        ";
+        
+        wp_add_inline_script('jquery', $script);
     }
     
     private static function cleanup_old_backups() {
-        $backups = get_option('sugm_backups', array());
-        $max_age = apply_filters('sugm_max_backup_age', 30 * DAY_IN_SECONDS);
+        $backups = get_option('safeupma_backups', array());
+        $max_age = apply_filters('safeupma_max_backup_age', 30 * DAY_IN_SECONDS);
         $current_time = time();
         $changed = false;
         
         foreach ($backups as $index => $backup) {
             if (isset($backup['timestamp']) && ($current_time - $backup['timestamp']) > $max_age) {
-                $backup_path = SUGM_BACKUP_DIR . $backup['type'] . 's/' . $backup['backup_name'];
+                $backup_path = SAFEUPMA_BACKUP_DIR . $backup['type'] . 's/' . $backup['backup_name'];
                 if (file_exists($backup_path)) {
                     if (is_file($backup_path)) {
                         wp_delete_file($backup_path);
@@ -398,12 +408,12 @@ final class SUGM_Admin {
         }
         
         if ($changed) {
-            update_option('sugm_backups', array_values($backups));
+            update_option('safeupma_backups', array_values($backups));
         }
     }
     
-    public static function restore_backup() {
-        if (!isset($_POST['nonce']) || !wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['nonce'])), 'sugm_nonce') || !current_user_can('manage_options')) {
+    public static function safeupma_restore_backup() {
+        if (!isset($_POST['nonce']) || !wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['nonce'])), 'safeupma_nonce') || !current_user_can('manage_options')) {
             wp_send_json_error(__('Security check failed.', 'safe-upgrades-manager'));
         }
         
@@ -413,7 +423,7 @@ final class SUGM_Admin {
             WP_Filesystem();
         }
         
-        $backups = get_option('sugm_backups', array());
+        $backups = get_option('safeupma_backups', array());
         $index = isset($_POST['index']) ? intval($_POST['index']) : -1;
         
         if ($index < 0 || !isset($backups[$index])) {
@@ -421,7 +431,7 @@ final class SUGM_Admin {
         }
         
         $backup = $backups[$index];
-        $backup_path = SUGM_BACKUP_DIR . $backup['type'] . 's/' . $backup['backup_name'];
+        $backup_path = SAFEUPMA_BACKUP_DIR . $backup['type'] . 's/' . $backup['backup_name'];
         
         if (!file_exists($backup_path)) {
             wp_send_json_error(__('Backup file not found.', 'safe-upgrades-manager'));
@@ -454,12 +464,12 @@ final class SUGM_Admin {
         }
     }
     
-    public static function delete_backup() {
-        if (!isset($_POST['nonce']) || !wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['nonce'])), 'sugm_nonce') || !current_user_can('manage_options')) {
+    public static function safeupma_delete_backup() {
+        if (!isset($_POST['nonce']) || !wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['nonce'])), 'safeupma_nonce') || !current_user_can('manage_options')) {
             wp_send_json_error(__('Security check failed.', 'safe-upgrades-manager'));
         }
         
-        $backups = get_option('sugm_backups', array());
+        $backups = get_option('safeupma_backups', array());
         $index = isset($_POST['index']) ? intval($_POST['index']) : -1;
         
         if ($index < 0 || !isset($backups[$index])) {
@@ -467,7 +477,7 @@ final class SUGM_Admin {
         }
         
         $backup = $backups[$index];
-        $backup_path = SUGM_BACKUP_DIR . $backup['type'] . 's/' . $backup['backup_name'];
+        $backup_path = SAFEUPMA_BACKUP_DIR . $backup['type'] . 's/' . $backup['backup_name'];
         
         if (file_exists($backup_path)) {
             if (!wp_delete_file($backup_path)) {
@@ -476,7 +486,7 @@ final class SUGM_Admin {
         }
         
         unset($backups[$index]);
-        update_option('sugm_backups', array_values($backups));
+        update_option('safeupma_backups', array_values($backups));
         
         wp_send_json_success(__('Backup deleted successfully.', 'safe-upgrades-manager'));
     }
@@ -585,4 +595,4 @@ final class SUGM_Admin {
     
 }
 
-SUGM_Admin::init();
+SAFEUPMA_Admin::init();

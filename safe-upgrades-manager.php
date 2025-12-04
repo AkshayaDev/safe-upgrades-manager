@@ -13,19 +13,19 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
-define('SUGM_PLUGIN_PATH', plugin_dir_path(__FILE__));
-define('SUGM_PLUGIN_URL', plugin_dir_url(__FILE__));
-define('SUGM_BACKUP_DIR', WP_CONTENT_DIR . '/upgrades-backup/');
+define('SAFEUPMA_PLUGIN_PATH', plugin_dir_path(__FILE__));
+define('SAFEUPMA_PLUGIN_URL', plugin_dir_url(__FILE__));
+define('SAFEUPMA_BACKUP_DIR', WP_CONTENT_DIR . '/upgrades-backup/');
 
 if (is_admin()) {
     require(dirname(__FILE__) . '/admin.php');
     
     // Add plugin action links
-    add_filter('plugin_action_links_' . plugin_basename(__FILE__), 'sugm_add_action_links');
+    add_filter('plugin_action_links_' . plugin_basename(__FILE__), 'safeupma_add_action_links');
 }
 
-function sugm_add_action_links($links) {
-    $backup_link = '<a href="' . admin_url('tools.php?page=sugm-backups') . '">' . __('Upgrade Backups', 'safe-upgrades-manager') . '</a>';
+function safeupma_add_action_links($links) {
+    $backup_link = '<a href="' . admin_url('tools.php?page=safeupma-backups') . '">' . __('Upgrade Backups', 'safe-upgrades-manager') . '</a>';
     array_unshift($links, $backup_link);
     return $links;
 }

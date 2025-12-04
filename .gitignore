@@ -1,0 +1,135 @@
+# WordPress Plugin .gitignore
+
+# WordPress Core Files (if accidentally included)
+wp-admin/
+wp-includes/
+wp-*.php
+xmlrpc.php
+license.txt
+readme.html
+
+# WordPress Config
+wp-config.php
+wp-config-sample.php
+
+# WordPress Content (except this plugin)
+wp-content/*
+!wp-content/plugins/
+wp-content/plugins/*
+!wp-content/plugins/safe-upgrades-manager/
+
+# Database dumps
+*.sql
+*.sqlite
+
+# Log files
+*.log
+error_log
+debug.log
+
+# Temporary files
+*.tmp
+*.temp
+*~
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDE and Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Node modules and package files (if using build tools)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+yarn.lock
+
+# Build directories
+dist/
+build/
+.sass-cache/
+
+# Composer dependencies (if using)
+vendor/
+composer.lock
+
+# Environment files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Backup directories created by this plugin
+upgrades-backup/
+backups/
+
+# ZIP files (backup files created by plugin)
+*.zip
+
+# Development and testing files
+phpunit.xml
+.phpunit.result.cache
+tests/
+test/
+coverage/
+
+# Documentation generation
+docs/
+documentation/
+
+# Cache directories
+cache/
+.cache/
+
+# Plugin-specific ignores
+# Ignore the suggestions file from WordPress.org review
+improvments-suggestions.html
+SUGGESTED_FIXES.md
+
+# Ignore any local configuration overrides
+local-config.php
+dev-config.php
+
+# Ignore any generated assets
+assets/dist/
+assets/build/
+
+# Version control
+.git/
+.gitattributes
+
+# Archive files
+*.tar
+*.tar.gz
+*.rar
+*.7z
+
+# PHP specific
+*.phar
+.phpunit.result.cache
+
+# System files
+.htaccess
+.htpasswd
+
+# Backup files
+*.bak
+*.backup
+*-backup
+*.old
+
+# Plugin development files
+screenshot-*.png
+screenshot-*.jpg
+screenshot-*.gif

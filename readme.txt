@@ -61,7 +61,7 @@ Backups are stored in `/wp-content/upgrades-backup/` directory. This directory i
 
 = How long are backups kept? =
 
-By default, backups older than 30 days are automatically deleted. You can modify this with the `sugm_max_backup_age` filter hook.
+By default, backups older than 30 days are automatically deleted. You can modify this with the `safeupma_max_backup_age` filter hook.
 
 = Can I restore a backup manually? =
 
@@ -108,7 +108,7 @@ Initial release of Safe Upgrades Manager. Provides automatic backup functionalit
 
 **Hooks and Filters:**
 
-* `sugm_max_backup_age` - Filter to modify the maximum age of backups before cleanup (default: 30 days)
+* `safeupma_max_backup_age` - Filter to modify the maximum age of backups before cleanup (default: 30 days)
 
 **Directory Structure:**
 ```

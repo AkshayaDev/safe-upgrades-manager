@@ -30,13 +30,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Support for both themes and plugins with unified backup management
 
 ### Technical Features
-- Custom `SUGM_Plugin_Upgrader` class extending `Plugin_Upgrader`
-- Custom `SUGM_Theme_Upgrader` class extending `Theme_Upgrader`
+- Custom `SAFEUPMA_Plugin_Upgrader` class extending `Plugin_Upgrader`
+- Custom `SAFEUPMA_Theme_Upgrader` class extending `Theme_Upgrader`
 - PclZip integration for reliable ZIP archive creation
 - RecursiveDirectoryIterator for efficient directory operations
 - WordPress-standard AJAX handling with proper security
 - Transient caching for improved performance
-- Filter hook `sugm_max_backup_age` for customizing backup retention
+- Filter hook `safeupma_max_backup_age` for customizing backup retention
 - Comprehensive error handling and user feedback
 
 ### Security
