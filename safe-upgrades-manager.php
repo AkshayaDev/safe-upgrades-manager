@@ -1,0 +1,31 @@
+<?php
+/**
+ * Plugin Name: Safe Upgrades Manager
+ * Plugin URI: https://github.com/AkshayaDev/safe-upgrades-manager
+ * Description: Creates backup copies of themes and plugins before upgrading them, allowing rollback to previous versions if needed.
+ * Version: 1.0.0
+ * Author: Akshaya Swaroop
+ * License: GPL v2 or later
+ * Text Domain: safe-upgrades-manager
+ */
+
+if (!defined('ABSPATH')) {
+    exit;
+}
+
+define('SUGM_PLUGIN_PATH', plugin_dir_path(__FILE__));
+define('SUGM_PLUGIN_URL', plugin_dir_url(__FILE__));
+define('SUGM_BACKUP_DIR', WP_CONTENT_DIR . '/upgrades-backup/');
+
+if (is_admin()) {
+    require(dirname(__FILE__) . '/admin.php');
+    
+    // Add plugin action links
+    add_filter('plugin_action_links_' . plugin_basename(__FILE__), 'sugm_add_action_links');
+}
+
+function sugm_add_action_links($links) {
+    $backup_link = '<a href="' . admin_url('tools.php?page=sugm-backups') . '">' . __('Upgrade Backups', 'safe-upgrades-manager') . '</a>';
+    array_unshift($links, $backup_link);
+    return $links;
+}
