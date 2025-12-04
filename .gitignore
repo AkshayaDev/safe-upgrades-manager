@@ -94,7 +94,6 @@ cache/
 
 # Plugin-specific ignores
 # Ignore the suggestions file from WordPress.org review
-improvments-suggestions.html
 SUGGESTED_FIXES.md
 
 # Ignore any local configuration overrides
