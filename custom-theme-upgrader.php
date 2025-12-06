@@ -191,7 +191,6 @@ class SAFEUPMA_Theme_Upgrader extends Theme_Upgrader {
         }
 
         // Attempt to increase memory limits only for this specific function.
-        $current_memory_limit = ini_get('memory_limit');
         $this->set_minimum_memory_limit('256M');
 
         // Use WordPress filesystem API instead of direct PclZip include
