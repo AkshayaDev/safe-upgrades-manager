@@ -18,8 +18,8 @@ define('SAFEUPMA_PLUGIN_PATH', plugin_dir_path(__FILE__));
 define('SAFEUPMA_PLUGIN_URL', plugin_dir_url(__FILE__));
 
 // Use uploads directory instead of wp-content for backup storage
-$upload_dir = wp_upload_dir();
-define('SAFEUPMA_BACKUP_DIR', trailingslashit($upload_dir['basedir']) . 'safe-upgrades-manager/');
+$safeupma_upload_dir = wp_upload_dir();
+define('SAFEUPMA_BACKUP_DIR', trailingslashit($safeupma_upload_dir['basedir']) . 'safe-upgrades-manager/');
 
 if (is_admin()) {
     require(dirname(__FILE__) . '/admin.php');

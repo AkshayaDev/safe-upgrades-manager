@@ -115,9 +115,11 @@ final class SAFEUPMA_Admin {
 
     public static function backup_page() {
         $backups = get_option('safeupma_backups', array());
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- This is for display purposes only, no sensitive actions
         $tab = isset($_GET['tab']) ? sanitize_text_field(wp_unslash($_GET['tab'])) : 'plugins';
         $current_tab = in_array($tab, array('plugins', 'themes')) ? $tab : 'plugins';
         $per_page = 10;
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- This is for pagination display purposes only
         $paged = isset($_GET['paged']) ? intval(wp_unslash($_GET['paged'])) : 1;
         $current_page = max(1, $paged);
         

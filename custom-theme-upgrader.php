@@ -174,6 +174,7 @@ class SAFEUPMA_Theme_Upgrader extends Theme_Upgrader {
 
             if ((int) $memory_limit < (int) $new_memory_limit) {
                 if (function_exists('ini_set')) {
+                    // phpcs:ignore Squiz.PHP.DiscouragedFunctions.Discouraged -- Required for large ZIP creation
                     @ini_set('memory_limit', $new_memory_limit);
                 }
             }
@@ -185,6 +186,7 @@ class SAFEUPMA_Theme_Upgrader extends Theme_Upgrader {
         // Set time limit only for this specific function
         if (function_exists('set_time_limit')) {
             $current_time_limit = ini_get('max_execution_time');
+            // phpcs:ignore Squiz.PHP.DiscouragedFunctions.Discouraged -- Required for large ZIP creation
             @set_time_limit(600);
         }
 
@@ -205,6 +207,7 @@ class SAFEUPMA_Theme_Upgrader extends Theme_Upgrader {
             // error_log('WPSU: ZIP creation failed - ' . $archive->errorInfo(true));
             // Restore original time limit if it was changed
             if (isset($current_time_limit) && function_exists('set_time_limit')) {
+                // phpcs:ignore Squiz.PHP.DiscouragedFunctions.Discouraged -- Restoring original value
                 @set_time_limit($current_time_limit);
             }
             return false;
@@ -212,6 +215,7 @@ class SAFEUPMA_Theme_Upgrader extends Theme_Upgrader {
 
         // Restore original time limit if it was changed
         if (isset($current_time_limit) && function_exists('set_time_limit')) {
+            // phpcs:ignore Squiz.PHP.DiscouragedFunctions.Discouraged -- Restoring original value
             @set_time_limit($current_time_limit);
         }
 
