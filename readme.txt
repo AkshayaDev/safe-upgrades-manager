@@ -112,12 +112,15 @@ Initial release of Safe Upgrades Manager. Provides automatic backup functionalit
 
 **Directory Structure:**
 ```
-wp-content/upgrades-backup/
+wp-uploads/safe-upgrades-manager/
 ├── plugins/
-│   └── [plugin-name]_[date-time]_backup.zip
-├── themes/
-│   └── [theme-name]_[date-time]_backup.zip
-└── .htaccess
+│   └── [plugin-slug]/
+│       ├── [plugin-name]_v[version]_[timestamp].zip
+│       └── [plugin-name]_v[version]_[timestamp].zip
+└── themes/
+    └── [theme-slug]/
+        ├── [theme-name]_v[version]_[timestamp].zip
+        └── [theme-name]_v[version]_[timestamp].zip
 ```
 
 **Requirements:**
