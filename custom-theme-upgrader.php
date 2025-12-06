@@ -182,14 +182,20 @@ class SAFEUPMA_Theme_Upgrader extends Theme_Upgrader {
     
     private function safeupma_create_zip_backup($source_dir, $zip_path) {
         // Reduce the chance that a timeout will occur while creating the zip file.
+        // Set time limit only for this specific function
         if (function_exists('set_time_limit')) {
+            $current_time_limit = ini_get('max_execution_time');
             @set_time_limit(600);
         }
 
-        // Attempt to increase memory limits.
+        // Attempt to increase memory limits only for this specific function.
+        $current_memory_limit = ini_get('memory_limit');
         $this->set_minimum_memory_limit('256M');
 
-        require_once(ABSPATH . 'wp-admin/includes/class-pclzip.php');
+        // Use WordPress filesystem API instead of direct PclZip include
+        if (!class_exists('PclZip')) {
+            require_once ABSPATH . 'wp-admin/includes/class-pclzip.php';
+        }
 
         $archive = new PclZip($zip_path);
 
@@ -197,7 +203,16 @@ class SAFEUPMA_Theme_Upgrader extends Theme_Upgrader {
 
         if (0 === $zip_result) {
             // error_log('WPSU: ZIP creation failed - ' . $archive->errorInfo(true));
+            // Restore original time limit if it was changed
+            if (isset($current_time_limit) && function_exists('set_time_limit')) {
+                @set_time_limit($current_time_limit);
+            }
             return false;
+        }
+
+        // Restore original time limit if it was changed
+        if (isset($current_time_limit) && function_exists('set_time_limit')) {
+            @set_time_limit($current_time_limit);
         }
 
         return true;

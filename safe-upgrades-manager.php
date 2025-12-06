@@ -13,9 +13,13 @@ if (!defined('ABSPATH')) {
     exit;
 }
 
+define('SAFEUPMA_PLUGIN_FILE', __FILE__);
 define('SAFEUPMA_PLUGIN_PATH', plugin_dir_path(__FILE__));
 define('SAFEUPMA_PLUGIN_URL', plugin_dir_url(__FILE__));
-define('SAFEUPMA_BACKUP_DIR', WP_CONTENT_DIR . '/upgrades-backup/');
+
+// Use uploads directory instead of wp-content for backup storage
+$upload_dir = wp_upload_dir();
+define('SAFEUPMA_BACKUP_DIR', trailingslashit($upload_dir['basedir']) . 'safe-upgrades-manager/');
 
 if (is_admin()) {
     require(dirname(__FILE__) . '/admin.php');

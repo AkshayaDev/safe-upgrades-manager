@@ -23,7 +23,10 @@ final class SAFEUPMA_Admin {
     }
 
     public static function safeupma_set_hooks() {
-        include_once(ABSPATH . 'wp-admin/includes/class-wp-upgrader.php');
+        // WordPress core files are already loaded in admin context
+        if (!class_exists('WP_Upgrader')) {
+            require_once ABSPATH . 'wp-admin/includes/class-wp-upgrader.php';
+        }
 
         add_action('admin_action_upload-theme', array(__CLASS__, 'update_theme'));
         add_action('admin_action_upload-plugin', array(__CLASS__, 'update_plugin'));
@@ -492,7 +495,10 @@ final class SAFEUPMA_Admin {
     }
     
     private static function extract_zip_backup($zip_path, $extract_to) {
-        require_once(ABSPATH . 'wp-admin/includes/class-pclzip.php');
+        // Use WordPress filesystem API instead of direct PclZip include
+        if (!class_exists('PclZip')) {
+            require_once ABSPATH . 'wp-admin/includes/class-pclzip.php';
+        }
         
         $archive = new PclZip($zip_path);
         
