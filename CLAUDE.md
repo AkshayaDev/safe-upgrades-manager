@@ -29,7 +29,8 @@ The plugin follows WordPress plugin standards with a modular class-based structu
 
 The plugin uses a two-tier backup approach:
 1. **Primary**: ZIP archive creation using WordPress PclZip class
-2. **Fallback**: Directory renaming if ZIP creation fails
+2. **Secondary**: ZipArchive class fallback if PclZip fails  
+3. **Final Fallback**: Directory renaming if both ZIP methods fail
 
 Backup storage structure:
 ```
@@ -39,6 +40,8 @@ wp-uploads/safe-upgrades-manager/
 └── themes/
     └── [theme-slug]_[timestamp]_backup.zip
 ```
+
+**Memory Management**: ZIP operations temporarily increase memory limit to 256M and execution time to 600 seconds.
 
 ### Database Schema
 
@@ -77,6 +80,12 @@ The plugin implements multiple security layers:
 ## Filter Hooks
 
 - `safeupma_max_backup_age`: Modify backup retention period (default: 30 days)
+  ```php
+  // Example: Change retention to 60 days
+  add_filter('safeupma_max_backup_age', function($age) {
+      return 60 * DAY_IN_SECONDS;
+  });
+  ```
 
 ## Known Limitations
 
@@ -89,10 +98,40 @@ The plugin implements multiple security layers:
 
 No build commands required - this is a standard WordPress plugin using PHP, JavaScript, and CSS without compilation steps.
 
-### Testing
-- Use WordPress plugin-check tool for WordPress.org compliance validation
-- Manual testing of upload/backup/restore workflow
+### Testing and Validation
+```bash
+# WordPress.org compliance validation (if plugin-check tool is available)
+wp plugin-check safe-upgrades-manager
+
+# Manual testing workflow:
+# 1. Upload test theme/plugin via WordPress admin
+# 2. Navigate to Tools > Upgrade Backups to verify backup creation
+# 3. Test restore functionality with created backups
+# 4. Test deletion of backups
+# 5. Verify .htaccess protection in backup directory
+```
+
+### Development Testing
 - Test with various theme and plugin sizes to verify memory handling
+- Test backup creation with both PclZip and ZipArchive methods
+- Verify nonce security and capability checks in AJAX handlers
+- Test automatic cleanup of backups older than 30 days
+
+## Key Code Locations
+
+### Main Hook Integration
+- Plugin upgrade interception: `admin.php:31-32` (admin_action hooks)
+- Theme/plugin upgrader replacement: `admin.php:58,92` (custom upgrader classes)
+
+### Backup Creation Logic
+- Plugin backup creation: `custom-plugin-upgrader.php:129-154`
+- Theme backup creation: `custom-theme-upgrader.php:106-135`
+- ZIP creation methods: Both upgraders have identical `safeupma_create_zip_backup()` methods
+
+### Restore & Management
+- AJAX restore handler: `admin.php:382-432`
+- AJAX delete handler: `admin.php:434-459`
+- Backup listing/pagination: `admin.php:180-202`
 
 ## File Structure
 

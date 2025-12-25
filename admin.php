@@ -47,7 +47,7 @@ final class SAFEUPMA_Admin {
         $parent_file = 'themes.php';
         $submenu_file = 'theme-install.php';
 
-        require_once(ABSPATH . 'wp-admin/admin-header.php');
+        require_once ABSPATH . 'wp-admin/admin-header.php';
 
         /* translators: %s: filename of the uploaded theme */
         $title = sprintf(__('Installing Theme from uploaded file: %s', 'safe-upgrades-manager'), esc_html(basename($file_upload->filename)));
@@ -81,7 +81,7 @@ final class SAFEUPMA_Admin {
         $title = __('Upload Plugin', 'safe-upgrades-manager');
         $parent_file = 'plugins.php';
         $submenu_file = 'plugin-install.php';
-        require_once(ABSPATH . 'wp-admin/admin-header.php');
+        require_once ABSPATH . 'wp-admin/admin-header.php';
 
         /* translators: %s: filename of the uploaded plugin */
         $title = sprintf(__('Installing Plugin from uploaded file: %s', 'safe-upgrades-manager'), esc_html(basename($file_upload->filename)));
@@ -497,56 +497,103 @@ final class SAFEUPMA_Admin {
     }
     
     private static function extract_zip_backup($zip_path, $extract_to) {
-        // Use WordPress filesystem API instead of direct PclZip include
-        if (!class_exists('PclZip')) {
-            require_once ABSPATH . 'wp-admin/includes/class-pclzip.php';
-        }
-        
-        $archive = new PclZip($zip_path);
-        
-        // Extract to temporary location first
-        $temp_extract_dir = dirname($extract_to) . '/temp_extract_' . time();
-        
-        if (!wp_mkdir_p($temp_extract_dir)) {
-            return false;
-        }
-        
-        $extract_result = $archive->extract(PCLZIP_OPT_PATH, $temp_extract_dir);
-        
-        if (0 === $extract_result) {
-            // error_log('WPSU: ZIP extraction failed - ' . $archive->errorInfo(true));
-            self::remove_directory($temp_extract_dir);
-            return false;
-        }
-        
-        // Find the actual plugin/theme directory inside the extracted content
-        $extracted_items = scandir($temp_extract_dir);
-        $source_dir = null;
-        
-        foreach ($extracted_items as $item) {
-            if ($item !== '.' && $item !== '..' && is_dir($temp_extract_dir . '/' . $item)) {
-                $source_dir = $temp_extract_dir . '/' . $item;
-                break;
+        // Try PclZip first (WordPress standard)
+        if (class_exists('PclZip')) {
+            $archive = new PclZip($zip_path);
+
+            // Extract to temporary location first
+            $temp_extract_dir = dirname($extract_to) . '/temp_extract_' . time();
+
+            if (!wp_mkdir_p($temp_extract_dir)) {
+                return false;
             }
+
+            $extract_result = $archive->extract(PCLZIP_OPT_PATH, $temp_extract_dir);
+
+            if (0 !== $extract_result) {
+                // Find the actual plugin/theme directory inside the extracted content
+                $extracted_items = scandir($temp_extract_dir);
+                $source_dir = null;
+
+                foreach ($extracted_items as $item) {
+                    if ($item !== '.' && $item !== '..' && is_dir($temp_extract_dir . '/' . $item)) {
+                        $source_dir = $temp_extract_dir . '/' . $item;
+                        break;
+                    }
+                }
+
+                if ($source_dir) {
+                    // Move the contents from the nested directory to the target location
+                    if (self::copy_directory($source_dir, $extract_to)) {
+                        // Clean up temporary extraction directory
+                        self::remove_directory($temp_extract_dir);
+                        return true;
+                    }
+                }
+                
+                // Clean up on failure
+                self::remove_directory($temp_extract_dir);
+            }
+            // error_log('WPSU: PclZip extraction failed - ' . $archive->errorInfo(true));
         }
         
-        if (!$source_dir) {
-            // error_log('WPSU: No directory found in extracted ZIP');
+        // Fallback to ZipArchive if PclZip fails or is not available
+        if (class_exists('ZipArchive')) {
+            $zip = new ZipArchive();
+            $result = $zip->open($zip_path);
+            
+            if ($result !== TRUE) {
+                // error_log('WPSU: ZipArchive open failed with code: ' . $result);
+                return false;
+            }
+            
+            // Extract to temporary location first
+            $temp_extract_dir = dirname($extract_to) . '/temp_extract_' . time();
+            
+            if (!wp_mkdir_p($temp_extract_dir)) {
+                $zip->close();
+                return false;
+            }
+            
+            $extract_result = $zip->extractTo($temp_extract_dir);
+            $zip->close();
+            
+            if (!$extract_result) {
+                // error_log('WPSU: ZipArchive extraction failed');
+                self::remove_directory($temp_extract_dir);
+                return false;
+            }
+            
+            // Find the actual plugin/theme directory inside the extracted content
+            $extracted_items = scandir($temp_extract_dir);
+            $source_dir = null;
+            
+            foreach ($extracted_items as $item) {
+                if ($item !== '.' && $item !== '..' && is_dir($temp_extract_dir . '/' . $item)) {
+                    $source_dir = $temp_extract_dir . '/' . $item;
+                    break;
+                }
+            }
+            
+            if (!$source_dir) {
+                // error_log('WPSU: No directory found in extracted ZIP');
+                self::remove_directory($temp_extract_dir);
+                return false;
+            }
+            
+            // Move the contents from the nested directory to the target location
+            if (!self::copy_directory($source_dir, $extract_to)) {
+                // error_log('WPSU: Failed to copy extracted files to target location');
+                self::remove_directory($temp_extract_dir);
+                return false;
+            }
+            
+            // Clean up temporary extraction directory
             self::remove_directory($temp_extract_dir);
-            return false;
+            return true;
         }
         
-        // Move the contents from the nested directory to the target location
-        if (!self::copy_directory($source_dir, $extract_to)) {
-            // error_log('WPSU: Failed to copy extracted files to target location');
-            self::remove_directory($temp_extract_dir);
-            return false;
-        }
-        
-        // Clean up temporary extraction directory
-        self::remove_directory($temp_extract_dir);
-        
-        return true;
+        return false;
     }
     
     private static function remove_directory($dir) {
